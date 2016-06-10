@@ -50,10 +50,35 @@ func (o *QLBinary) get() ast.Expression {
 	return o.binary
 }
 
-func (ql *QL) MustBeBinaryExpression() *QL {
+func (ql *QL) MustBeBinary() *QL {
 	ql.operations = append(ql.operations, &QLBinary{})
 	return ql
 }
+
+
+type QLUnary struct {
+	unary *ast.UnaryExpression
+}
+
+func (o *QLUnary) run(e ast.Expression) error {
+	var isUnary bool
+	o.unary, isUnary = e.(*ast.UnaryExpression)
+	if !isUnary {
+		return fmt.Errorf("Expression is not unary")
+	}
+
+	return nil
+}
+
+func (o *QLUnary) get() ast.Expression {
+	return o.unary
+}
+
+func (ql *QL) MustBeUnary() *QL {
+	ql.operations = append(ql.operations, &QLUnary{})
+	return ql
+}
+
 
 type QLOperator struct {
 	operators  []token.Token
