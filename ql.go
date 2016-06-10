@@ -193,6 +193,32 @@ func (ql *QL) AcceptNumbers(depth int) *QL {
 	return ql
 }
 
+type QLBooleanLeaf struct {
+	depth      int
+	expression ast.Expression
+}
+
+func (o *QLBooleanLeaf) run(expression ast.Expression) error {
+	o.expression = expression
+	ok := VerifyExpression(expression, o.depth, newOnlyBooleanVerifier())
+	if !ok {
+		return fmt.Errorf("Expression does not only contain booleans")
+	}
+
+	return nil
+}
+
+func (o *QLBooleanLeaf) get() ast.Expression {
+	return o.expression
+}
+
+func (ql *QL) AcceptBoolean(depth int) *QL {
+	ql.operations = append(ql.operations, &QLBooleanLeaf{
+		depth: depth,
+	})
+	return ql
+}
+
 type QLOperand struct {
 	expression ast.Expression
 }

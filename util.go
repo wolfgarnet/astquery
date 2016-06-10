@@ -23,6 +23,9 @@ func VerifyExpression(exp ast.Expression, depth int, verify func(ast.Expression)
 			return false
 		}
 
+	case *ast.BooleanLiteral:
+		return true
+
 	case *ast.NumberLiteral:
 		return true
 
@@ -40,6 +43,22 @@ func newOnlyNumberVerifier() func(ast.Expression) bool {
 	return func(e ast.Expression) bool {
 		switch e.(type) {
 		case *ast.StringLiteral:
+			return false
+
+		case *ast.BooleanLiteral:
+			return false
+		}
+
+		return true
+	}
+}
+
+func newOnlyBooleanVerifier() func(ast.Expression) bool {
+	return func(e ast.Expression) bool {
+		switch e.(type) {
+		case *ast.StringLiteral:
+			return false
+		case *ast.NullLiteral:
 			return false
 		}
 
