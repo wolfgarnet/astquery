@@ -66,3 +66,34 @@ func TestQL2(t *testing.T) {
 
 	fmt.Printf("ERROR IS %v\n", err)
 }
+
+func TestQL3(t *testing.T) {
+	left := &ast.BooleanLiteral{
+		Value:   true,
+		Literal: "true",
+	}
+
+	right := &ast.BooleanLiteral{
+		Value:   true,
+		Literal: "true",
+	}
+	/*
+	right := &ast.NumberLiteral{
+		Value:   2,
+		Literal: "2",
+	}
+	*/
+	binary := &ast.BinaryExpression{
+		Operator: token.LOGICAL_AND,
+		Left:     left,
+		Right:    right,
+	}
+	unary := &ast.UnaryExpression{
+		Operator: token.NOT,
+		Operand:binary,
+	}
+
+	err := NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().MustBeBinary().HasOperator(token.LOGICAL_AND).Operands(NewQuery().AcceptBoolean(5))).Run(unary)
+
+	fmt.Printf("ERROR IS %v\n", err)
+}

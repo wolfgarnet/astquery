@@ -233,7 +233,8 @@ func (o *QLOperands) run(expression ast.Expression) error {
 			return fmt.Errorf("Binary operands where not compatible, left: %v, right: %v", err1, err2)
 		}
 	case *ast.UnaryExpression:
-		return o.query.Run(t.Operand)
+		err := o.query.Run(t.Operand)
+		return err
 	default:
 		return fmt.Errorf("Expression does not have one operand")
 	}

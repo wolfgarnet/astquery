@@ -58,7 +58,7 @@ func newOnlyBooleanVerifier() func(ast.Expression) bool {
 		switch e.(type) {
 		case *ast.StringLiteral:
 			return false
-		case *ast.NullLiteral:
+		case *ast.NumberLiteral:
 			return false
 		}
 
