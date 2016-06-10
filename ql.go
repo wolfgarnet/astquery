@@ -219,14 +219,21 @@ func (ql *QL) AcceptBoolean(depth int) *QL {
 	return ql
 }
 
-type QLOperand struct {
+type QLOperands struct {
 	expression ast.Expression
+	query *QL
 }
 
-func (o *QLOperand) run(expression ast.Expression) error {
+func (o *QLOperands) run(expression ast.Expression) error {
 	switch t := expression.(type) {
+	case *ast.BinaryExpression:
+		err1 := o.query.Run(t.Left)
+		err2 := o.query.Run(t.Right)
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("Binary operands where not compatible, left: %v, right: %v", err1, err2)
+		}
 	case *ast.UnaryExpression:
-		o.expression = t.Operand
+		return o.query.Run(t.Operand)
 	default:
 		return fmt.Errorf("Expression does not have one operand")
 	}
@@ -234,11 +241,13 @@ func (o *QLOperand) run(expression ast.Expression) error {
 	return nil
 }
 
-func (o *QLOperand) get() ast.Expression {
+func (o *QLOperands) get() ast.Expression {
 	return o.expression
 }
 
-func (ql *QL) Operand() *QL {
-	ql.operations = append(ql.operations, &QLOperand{})
+func (ql *QL) Operand(query *QL) *QL {
+	ql.operations = append(ql.operations, &QLOperands{
+		query:query,
+	})
 	return ql
 }
