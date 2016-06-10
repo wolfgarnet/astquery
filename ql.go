@@ -245,7 +245,7 @@ func (o *QLOperands) get() ast.Expression {
 	return o.expression
 }
 
-func (ql *QL) Operand(query *QL) *QL {
+func (ql *QL) Operands(query *QL) *QL {
 	ql.operations = append(ql.operations, &QLOperands{
 		query:query,
 	})
