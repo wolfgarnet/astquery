@@ -91,6 +91,10 @@ func (o *QLOperator) run(e ast.Expression) error {
 	switch t := e.(type) {
 	case *ast.BinaryExpression:
 		operator = t.Operator
+
+	case *ast.UnaryExpression:
+		operator = t.Operator
+
 	default:
 		return fmt.Errorf("Expression not compatible with operators")
 	}
@@ -186,5 +190,29 @@ func (ql *QL) AcceptNumbers(depth int) *QL {
 	ql.operations = append(ql.operations, &QLNumberLeaf{
 		depth: depth,
 	})
+	return ql
+}
+
+type QLOperand struct {
+	expression ast.Expression
+}
+
+func (o *QLOperand) run(expression ast.Expression) error {
+	switch t := expression.(type) {
+	case *ast.UnaryExpression:
+		o.expression = t.Operand
+	default:
+		return fmt.Errorf("Expression does not have one operand")
+	}
+
+	return nil
+}
+
+func (o *QLOperand) get() ast.Expression {
+	return o.expression
+}
+
+func (ql *QL) Operand() *QL {
+	ql.operations = append(ql.operations, &QLOperand{})
 	return ql
 }
