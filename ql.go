@@ -6,15 +6,15 @@ import (
 	"github.com/robertkrimen/otto/token"
 )
 
-type QL struct {
+type Query struct {
 	operations []QLOperation
 }
 
-func NewQuery() *QL {
-	return &QL{}
+func NewQuery() *Query {
+	return &Query{}
 }
 
-func (ql *QL) Run(expression ast.Expression) error {
+func (ql *Query) Run(expression ast.Expression) error {
 	for _, q := range ql.operations {
 		err := q.run(expression)
 		if err != nil {
@@ -32,13 +32,13 @@ type QLOperation interface {
 	get() ast.Expression
 }
 
-type QLBinary struct {
+type binaryQuery struct {
 	binary *ast.BinaryExpression
 }
 
-func (o *QLBinary) run(e ast.Expression) error {
+func (qo *binaryQuery) run(e ast.Expression) error {
 	var isBinary bool
-	o.binary, isBinary = e.(*ast.BinaryExpression)
+	qo.binary, isBinary = e.(*ast.BinaryExpression)
 	if !isBinary {
 		return fmt.Errorf("Expression is not binary")
 	}
@@ -46,23 +46,23 @@ func (o *QLBinary) run(e ast.Expression) error {
 	return nil
 }
 
-func (o *QLBinary) get() ast.Expression {
-	return o.binary
+func (qo *binaryQuery) get() ast.Expression {
+	return qo.binary
 }
 
-func (ql *QL) MustBeBinary() *QL {
-	ql.operations = append(ql.operations, &QLBinary{})
-	return ql
+func (q *Query) MustBeBinary() *Query {
+	q.operations = append(q.operations, &binaryQuery{})
+	return q
 }
 
 
-type QLUnary struct {
+type unaryQuery struct {
 	unary *ast.UnaryExpression
 }
 
-func (o *QLUnary) run(e ast.Expression) error {
+func (qo *unaryQuery) run(e ast.Expression) error {
 	var isUnary bool
-	o.unary, isUnary = e.(*ast.UnaryExpression)
+	qo.unary, isUnary = e.(*ast.UnaryExpression)
 	if !isUnary {
 		return fmt.Errorf("Expression is not unary")
 	}
@@ -70,23 +70,23 @@ func (o *QLUnary) run(e ast.Expression) error {
 	return nil
 }
 
-func (o *QLUnary) get() ast.Expression {
-	return o.unary
+func (qo *unaryQuery) get() ast.Expression {
+	return qo.unary
 }
 
-func (ql *QL) MustBeUnary() *QL {
-	ql.operations = append(ql.operations, &QLUnary{})
-	return ql
+func (q *Query) MustBeUnary() *Query {
+	q.operations = append(q.operations, &unaryQuery{})
+	return q
 }
 
 
-type QLOperator struct {
+type operatorQuery struct {
 	operators  []token.Token
 	expression ast.Expression
 }
 
-func (o *QLOperator) run(e ast.Expression) error {
-	o.expression = e
+func (qo *operatorQuery) run(e ast.Expression) error {
+	qo.expression = e
 	var operator token.Token
 	switch t := e.(type) {
 	case *ast.BinaryExpression:
@@ -100,7 +100,7 @@ func (o *QLOperator) run(e ast.Expression) error {
 	}
 
 	found := false
-	for _, op := range o.operators {
+	for _, op := range qo.operators {
 		if op == operator {
 			found = true
 			break
@@ -114,23 +114,23 @@ func (o *QLOperator) run(e ast.Expression) error {
 	return nil
 }
 
-func (o *QLOperator) get() ast.Expression {
-	return o.expression
+func (qo *operatorQuery) get() ast.Expression {
+	return qo.expression
 }
 
-func (ql *QL) HasOperator(operators ...token.Token) *QL {
-	ql.operations = append(ql.operations, &QLOperator{
+func (q *Query) HasOperator(operators ...token.Token) *Query {
+	q.operations = append(q.operations, &operatorQuery{
 		operators: operators,
 	})
-	return ql
+	return q
 }
 
-type QLSideOther struct {
+type eitherSideQuery struct {
 	expression ast.Expression
-	one, other *QL
+	one, other *Query
 }
 
-func (o *QLSideOther) run(e ast.Expression) error {
+func (qo *eitherSideQuery) run(e ast.Expression) error {
 
 	// Must be binary
 	binary, isBinary := e.(*ast.BinaryExpression)
@@ -139,42 +139,42 @@ func (o *QLSideOther) run(e ast.Expression) error {
 	}
 
 	// First
-	err1 := o.one.Run(binary.Left)
-	err2 := o.other.Run(binary.Right)
+	err1 := qo.one.Run(binary.Left)
+	err2 := qo.other.Run(binary.Right)
 	if err1 != nil || err2 != nil {
-		err1 := o.one.Run(binary.Right)
-		err2 := o.other.Run(binary.Left)
+		err1 := qo.one.Run(binary.Right)
+		err2 := qo.other.Run(binary.Left)
 
 		if err1 != nil || err2 != nil {
 			return fmt.Errorf("Expression is not compatible, left: %v, right: %v", err1, err2)
 		}
 	}
 
-	o.expression = e
+	qo.expression = e
 
 	return nil
 }
 
-func (o *QLSideOther) get() ast.Expression {
-	return o.expression
+func (qo *eitherSideQuery) get() ast.Expression {
+	return qo.expression
 }
 
-func (ql *QL) OneSideOtherSide(one *QL, other *QL) *QL {
-	ql.operations = append(ql.operations, &QLSideOther{
+func (q *Query) OneSideOtherSide(one *Query, other *Query) *Query {
+	q.operations = append(q.operations, &eitherSideQuery{
 		one:   one,
 		other: other,
 	})
-	return ql
+	return q
 }
 
-type QLNumberLeaf struct {
+type numberQuery struct {
 	depth      int
 	expression ast.Expression
 }
 
-func (o *QLNumberLeaf) run(expression ast.Expression) error {
-	o.expression = expression
-	ok := VerifyExpression(expression, o.depth, newOnlyNumberVerifier())
+func (qo *numberQuery) run(expression ast.Expression) error {
+	qo.expression = expression
+	ok := VerifyExpression(expression, qo.depth, newOnlyNumberVerifier())
 	if !ok {
 		return fmt.Errorf("Expression does not only contain numbers")
 	}
@@ -182,25 +182,25 @@ func (o *QLNumberLeaf) run(expression ast.Expression) error {
 	return nil
 }
 
-func (o *QLNumberLeaf) get() ast.Expression {
-	return o.expression
+func (qo *numberQuery) get() ast.Expression {
+	return qo.expression
 }
 
-func (ql *QL) AcceptNumbers(depth int) *QL {
-	ql.operations = append(ql.operations, &QLNumberLeaf{
+func (q *Query) AcceptNumbers(depth int) *Query {
+	q.operations = append(q.operations, &numberQuery{
 		depth: depth,
 	})
-	return ql
+	return q
 }
 
-type QLBooleanLeaf struct {
+type booleanQuery struct {
 	depth      int
 	expression ast.Expression
 }
 
-func (o *QLBooleanLeaf) run(expression ast.Expression) error {
-	o.expression = expression
-	ok := VerifyExpression(expression, o.depth, newOnlyBooleanVerifier())
+func (qo *booleanQuery) run(expression ast.Expression) error {
+	qo.expression = expression
+	ok := VerifyExpression(expression, qo.depth, newOnlyBooleanVerifier())
 	if !ok {
 		return fmt.Errorf("Expression does not only contain booleans")
 	}
@@ -208,32 +208,32 @@ func (o *QLBooleanLeaf) run(expression ast.Expression) error {
 	return nil
 }
 
-func (o *QLBooleanLeaf) get() ast.Expression {
-	return o.expression
+func (qo *booleanQuery) get() ast.Expression {
+	return qo.expression
 }
 
-func (ql *QL) AcceptBoolean(depth int) *QL {
-	ql.operations = append(ql.operations, &QLBooleanLeaf{
+func (q *Query) AcceptBoolean(depth int) *Query {
+	q.operations = append(q.operations, &booleanQuery{
 		depth: depth,
 	})
-	return ql
+	return q
 }
 
-type QLOperands struct {
+type operandsQuery struct {
 	expression ast.Expression
-	query *QL
+	query *Query
 }
 
-func (o *QLOperands) run(expression ast.Expression) error {
+func (qo *operandsQuery) run(expression ast.Expression) error {
 	switch t := expression.(type) {
 	case *ast.BinaryExpression:
-		err1 := o.query.Run(t.Left)
-		err2 := o.query.Run(t.Right)
+		err1 := qo.query.Run(t.Left)
+		err2 := qo.query.Run(t.Right)
 		if err1 != nil || err2 != nil {
 			return fmt.Errorf("Binary operands where not compatible, left: %v, right: %v", err1, err2)
 		}
 	case *ast.UnaryExpression:
-		err := o.query.Run(t.Operand)
+		err := qo.query.Run(t.Operand)
 		return err
 	default:
 		return fmt.Errorf("Expression does not have one operand")
@@ -242,13 +242,13 @@ func (o *QLOperands) run(expression ast.Expression) error {
 	return nil
 }
 
-func (o *QLOperands) get() ast.Expression {
-	return o.expression
+func (qo *operandsQuery) get() ast.Expression {
+	return qo.expression
 }
 
-func (ql *QL) Operands(query *QL) *QL {
-	ql.operations = append(ql.operations, &QLOperands{
+func (q *Query) Operands(query *Query) *Query {
+	q.operations = append(q.operations, &operandsQuery{
 		query:query,
 	})
-	return ql
+	return q
 }
