@@ -40,7 +40,7 @@ func (qo *binaryQuery) run(e ast.Expression) error {
 	var isBinary bool
 	qo.binary, isBinary = e.(*ast.BinaryExpression)
 	if !isBinary {
-		return fmt.Errorf("Expression is not binary")
+		return fmt.Errorf("Expression is not binary, was %T", e)
 	}
 
 	return nil
@@ -64,7 +64,7 @@ func (qo *unaryQuery) run(e ast.Expression) error {
 	var isUnary bool
 	qo.unary, isUnary = e.(*ast.UnaryExpression)
 	if !isUnary {
-		return fmt.Errorf("Expression is not unary")
+		return fmt.Errorf("Expression is not unary, was %T", e)
 	}
 
 	return nil
