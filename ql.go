@@ -6,14 +6,17 @@ import (
 	"github.com/robertkrimen/otto/token"
 )
 
+// Query defines the basic structure for a query
 type Query struct {
 	operations []QLOperation
 }
 
+// NewQuery returns a new query
 func NewQuery() *Query {
 	return &Query{}
 }
 
+// Run runs the query given the ast expression
 func (ql *Query) Run(expression ast.Expression) error {
 	for _, q := range ql.operations {
 		err := q.run(expression)
@@ -27,11 +30,13 @@ func (ql *Query) Run(expression ast.Expression) error {
 	return nil
 }
 
+// QLOperation specifies a query operation
 type QLOperation interface {
 	run(ast.Expression) error
 	get() ast.Expression
 }
 
+// binaryQuery requires the current expression to be binary
 type binaryQuery struct {
 	binary *ast.BinaryExpression
 }
@@ -50,12 +55,13 @@ func (qo *binaryQuery) get() ast.Expression {
 	return qo.binary
 }
 
+// MustBeBinary restricts the expression to be binary
 func (q *Query) MustBeBinary() *Query {
 	q.operations = append(q.operations, &binaryQuery{})
 	return q
 }
 
-
+// unaryQuery requires the current expression to be unary
 type unaryQuery struct {
 	unary *ast.UnaryExpression
 }
@@ -74,12 +80,13 @@ func (qo *unaryQuery) get() ast.Expression {
 	return qo.unary
 }
 
+// MustBeUnary restricts the expression to be unary
 func (q *Query) MustBeUnary() *Query {
 	q.operations = append(q.operations, &unaryQuery{})
 	return q
 }
 
-
+// operatorQuery filters expressions based on operators
 type operatorQuery struct {
 	operators  []token.Token
 	expression ast.Expression
@@ -118,6 +125,7 @@ func (qo *operatorQuery) get() ast.Expression {
 	return qo.expression
 }
 
+// HasOperator filters expressions given the set of operators.
 func (q *Query) HasOperator(operators ...token.Token) *Query {
 	q.operations = append(q.operations, &operatorQuery{
 		operators: operators,
@@ -125,6 +133,7 @@ func (q *Query) HasOperator(operators ...token.Token) *Query {
 	return q
 }
 
+// eitherSideQuery will try to run the two provided queries on the binary expression in both order.
 type eitherSideQuery struct {
 	expression ast.Expression
 	one, other *Query
@@ -159,6 +168,8 @@ func (qo *eitherSideQuery) get() ast.Expression {
 	return qo.expression
 }
 
+// OneSideOtherSide will run the queries on both operands in a binary expression in both order.
+// If the first order doesn't work the other is tried.
 func (q *Query) OneSideOtherSide(one *Query, other *Query) *Query {
 	q.operations = append(q.operations, &eitherSideQuery{
 		one:   one,
@@ -167,6 +178,7 @@ func (q *Query) OneSideOtherSide(one *Query, other *Query) *Query {
 	return q
 }
 
+// numberQuery will determine if a part of the tree is solely numbers
 type numberQuery struct {
 	depth      int
 	expression ast.Expression
@@ -186,6 +198,7 @@ func (qo *numberQuery) get() ast.Expression {
 	return qo.expression
 }
 
+// AcceptNumbers will only pass if the subtree is solely numbers.
 func (q *Query) AcceptNumbers(depth int) *Query {
 	q.operations = append(q.operations, &numberQuery{
 		depth: depth,
@@ -193,6 +206,7 @@ func (q *Query) AcceptNumbers(depth int) *Query {
 	return q
 }
 
+// booleanQuery will determine if a part of the tree is solely booleans
 type booleanQuery struct {
 	depth      int
 	expression ast.Expression
@@ -212,6 +226,7 @@ func (qo *booleanQuery) get() ast.Expression {
 	return qo.expression
 }
 
+// AcceptBoolean will only pass if the subtree is solely booleans.
 func (q *Query) AcceptBoolean(depth int) *Query {
 	q.operations = append(q.operations, &booleanQuery{
 		depth: depth,
@@ -219,6 +234,7 @@ func (q *Query) AcceptBoolean(depth int) *Query {
 	return q
 }
 
+// operandsQuery will run a query on all possible operands
 type operandsQuery struct {
 	expression ast.Expression
 	query *Query
@@ -246,6 +262,9 @@ func (qo *operandsQuery) get() ast.Expression {
 	return qo.expression
 }
 
+// Operands will run the query on all possible operands.
+// Unary - one operand
+// Binary - two operands
 func (q *Query) Operands(query *Query) *Query {
 	q.operations = append(q.operations, &operandsQuery{
 		query:query,

@@ -2,6 +2,7 @@ package astquery
 
 import "github.com/robertkrimen/otto/ast"
 
+// VerifyExpression will verify an expression given a depth and a verification function.
 func VerifyExpression(exp ast.Expression, depth int, verify func(ast.Expression) bool) bool {
 
 	if depth == 0 {
