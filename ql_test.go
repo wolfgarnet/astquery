@@ -1,36 +1,123 @@
 package astquery
 
 import (
-	"fmt"
 	"github.com/robertkrimen/otto/ast"
 	"github.com/robertkrimen/otto/token"
 	"testing"
 )
 
-func TestQL(t *testing.T) {
-	left := &ast.NumberLiteral{
-		Value:   1,
-		Literal: "1",
+func TestQuery(t *testing.T) {
+	tests := []struct {
+		expression ast.Expression
+		query      *Query
+		mustFail   bool
+	}{
+
+		// Test 0
+		{&ast.BinaryExpression{
+			Operator:token.LOGICAL_OR,
+			Left:&ast.BooleanLiteral{
+				Value:true,
+			},
+			Right:&ast.BooleanLiteral{
+				Value:true,
+			},
+		},NewQuery().MustBeBinary().HasOperator(token.LOGICAL_OR).Operands(NewQuery().AcceptBoolean(5)),
+			false,
+		},
+
+		// Test 1
+		{&ast.BinaryExpression{
+			Operator:token.LOGICAL_OR,
+			Left:&ast.BooleanLiteral{
+				Value:true,
+			},
+			Right:&ast.BooleanLiteral{
+				Value:true,
+			},
+		},NewQuery().MustBeUnary(),
+			true,
+		},
+
+		// Test 2
+		{&ast.BinaryExpression{
+			Operator:token.LOGICAL_OR,
+			Left:&ast.BooleanLiteral{
+				Value:true,
+			},
+			Right:&ast.BooleanLiteral{
+				Value:true,
+			},
+		},NewQuery().MustBeBinary().Operands(NewQuery().AcceptNumbers(5)),
+			true,
+		},
+
+		// Test 3
+		{&ast.BinaryExpression{
+			Operator:token.LOGICAL_OR,
+			Left:&ast.BooleanLiteral{
+				Value:true,
+			},
+			Right:&ast.NumberLiteral{
+				Value:5,
+			},
+		},NewQuery().MustBeBinary().HasOperator(token.LOGICAL_OR).OneSideOtherSide(NewQuery().AcceptBoolean(5), NewQuery().AcceptNumbers(5)),
+			false,
+		},
+
+		// Test 4
+		{&ast.UnaryExpression{
+			Operator:token.NOT,
+			Operand:&ast.BooleanLiteral{
+				Value:true,
+			},
+		},NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().AcceptBoolean(5)),
+			false,
+		},
+
+		// Test 5
+		{&ast.UnaryExpression{
+			Operator:token.NOT,
+			Operand:&ast.BooleanLiteral{
+				Value:true,
+			},
+		},NewQuery().MustBeBinary(),
+			true,
+		},
+
+		// Test 6
+		{&ast.UnaryExpression{
+			Operator:token.INCREMENT,
+			Operand:&ast.BooleanLiteral{
+				Value:true,
+			},
+		},NewQuery().MustBeUnary().HasOperator(token.NOT),
+			true,
+		},
+
+		// Test 7
+		{&ast.UnaryExpression{
+			Operator:token.INCREMENT,
+			Operand:&ast.NumberLiteral{
+				Value:5,
+			},
+		},NewQuery().MustBeUnary().HasOperator(token.INCREMENT).Operands(NewQuery().AcceptNumbers(5)),
+			false,
+		},
 	}
-	/*
-		right := &ast.NumberLiteral{
-			Value:   1,
-			Literal: "1",
+
+	for i, test := range tests {
+		err := test.query.Run(test.expression)
+		if err != nil && !test.mustFail {
+			t.Errorf("Test %v failed, %v", i, err)
+			continue
 		}
-	*/
-	right := &ast.StringLiteral{
-		Value:   "1",
-		Literal: "1",
-	}
-	binary := &ast.BinaryExpression{
-		Operator: token.PLUS,
-		Left:     left,
-		Right:    right,
-	}
 
-	err := NewQuery().MustBeBinary().HasOperator(token.PLUS).OneSideOtherSide(NewQuery().AcceptNumbers(5), NewQuery().AcceptNumbers(5)).Run(binary)
-
-	fmt.Printf("ERROR IS %v\n", err)
+		if err == nil && test.mustFail {
+			t.Errorf("Test %v should have failed!", i)
+			continue
+		}
+	}
 }
 
 func TestQL2(t *testing.T) {
@@ -58,13 +145,13 @@ func TestQL2(t *testing.T) {
 		Right:    right,
 	}
 
-
-
 	err := NewQuery().MustBeBinary().HasOperator(token.MULTIPLY).OneSideOtherSide(
 		NewQuery().AcceptNumbers(1),
 		NewQuery().MustBeBinary().HasOperator(token.PLUS).AcceptNumbers(5)).Run(binary)
 
-	fmt.Printf("ERROR IS %v\n", err)
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
 }
 
 func TestQL3(t *testing.T) {
@@ -95,5 +182,35 @@ func TestQL3(t *testing.T) {
 
 	err := NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().MustBeBinary().HasOperator(token.LOGICAL_AND).Operands(NewQuery().AcceptBoolean(5))).Run(unary)
 
-	fmt.Printf("ERROR IS %v\n", err)
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+}
+
+func TestQL4_fail(t *testing.T) {
+	left := &ast.BooleanLiteral{
+		Value:   true,
+		Literal: "true",
+	}
+
+	right := &ast.NumberLiteral{
+		Value:   2,
+		Literal: "2",
+	}
+
+	binary := &ast.BinaryExpression{
+		Operator: token.LOGICAL_AND,
+		Left:     left,
+		Right:    right,
+	}
+	unary := &ast.UnaryExpression{
+		Operator: token.NOT,
+		Operand:binary,
+	}
+
+	err := NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().MustBeBinary().HasOperator(token.LOGICAL_AND).Operands(NewQuery().AcceptBoolean(5))).Run(unary)
+
+	if err == nil {
+		t.Errorf("Test should have failed, %v", err)
+	}
 }
