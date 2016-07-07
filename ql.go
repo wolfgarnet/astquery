@@ -9,6 +9,7 @@ import (
 // Query defines the basic structure for a query
 type Query struct {
 	operations []QLOperation
+	Collected ast.Expression
 }
 
 // NewQuery returns a new query
@@ -25,6 +26,9 @@ func (ql *Query) Run(expression ast.Expression) error {
 		}
 
 		expression = q.get()
+		if ql.Collected == nil {
+			ql.Collected = expression
+		}
 	}
 
 	return nil
@@ -37,6 +41,11 @@ func (ql *Query) RunStatement(statement ast.Statement) error {
 	default:
 		return fmt.Errorf("Unsupported statement: %T", statement)
 	}
+}
+
+func (ql *Query) Collect() *Query {
+	ql.Collected = nil
+	return ql
 }
 
 // QLOperation specifies a query operation
