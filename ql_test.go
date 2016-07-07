@@ -97,3 +97,20 @@ func TestQL3(t *testing.T) {
 
 	fmt.Printf("ERROR IS %v\n", err)
 }
+
+func TestQLCall(t *testing.T) {
+	callee := &ast.Identifier{
+		Name:"f",
+	}
+	call := &ast.CallExpression{
+		Callee:callee,
+		ArgumentList:nil,
+	}
+	statement := &ast.ExpressionStatement{
+		call,
+	}
+
+	err := NewQuery().MustBeCall().RunStatement(statement)
+
+	fmt.Printf("ERROR IS %v\n", err)
+}

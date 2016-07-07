@@ -30,6 +30,15 @@ func (ql *Query) Run(expression ast.Expression) error {
 	return nil
 }
 
+func (ql *Query) RunStatement(statement ast.Statement) error {
+	switch s := statement.(type) {
+	case *ast.ExpressionStatement:
+		return ql.Run(s.Expression)
+	default:
+		return fmt.Errorf("Unsupported statement: %T", statement)
+	}
+}
+
 // QLOperation specifies a query operation
 type QLOperation interface {
 	run(ast.Expression) error
@@ -58,6 +67,31 @@ func (qo *binaryQuery) get() ast.Expression {
 // MustBeBinary restricts the expression to be binary
 func (q *Query) MustBeBinary() *Query {
 	q.operations = append(q.operations, &binaryQuery{})
+	return q
+}
+
+// callQuery
+type callQuery struct {
+	call *ast.CallExpression
+}
+
+func (qo *callQuery) run(e ast.Expression) error {
+	var isCall bool
+	qo.call, isCall = e.(*ast.CallExpression)
+	if !isCall {
+		return fmt.Errorf("Expression is not call, was %T", e)
+	}
+
+	return nil
+}
+
+func (qo *callQuery) get() ast.Expression {
+	return qo.call
+}
+
+// MustBeBinary restricts the expression to be binary
+func (q *Query) MustBeCall() *Query {
+	q.operations = append(q.operations, &callQuery{})
 	return q
 }
 
@@ -271,3 +305,4 @@ func (q *Query) Operands(query *Query) *Query {
 	})
 	return q
 }
+
