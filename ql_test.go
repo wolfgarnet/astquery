@@ -233,3 +233,23 @@ func TestQLCall(t *testing.T) {
 		t.Errorf("Test failed, %v", err)
 	}
 }
+
+func TestQLReturnStatement(t *testing.T) {
+	callee := &ast.Identifier{
+		Name:"f",
+	}
+	call := &ast.CallExpression{
+		Callee:callee,
+		ArgumentList:nil,
+	}
+
+	statement := &ast.ReturnStatement{
+		Argument:call,
+	}
+
+	err := NewQuery().MustBeCall().RunStatement(statement)
+
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+}

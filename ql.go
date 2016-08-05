@@ -38,6 +38,8 @@ func (ql *Query) RunStatement(statement ast.Statement) error {
 	switch s := statement.(type) {
 	case *ast.ExpressionStatement:
 		return ql.Run(s.Expression)
+	case *ast.ReturnStatement:
+		return ql.Run(s.Argument)
 	default:
 		return fmt.Errorf("Unsupported statement: %T", statement)
 	}
