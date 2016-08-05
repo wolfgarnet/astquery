@@ -9,7 +9,7 @@ import (
 // Query defines the basic structure for a query
 type Query struct {
 	operations []QLOperation
-	Collected ast.Expression
+	Collected  ast.Expression
 }
 
 // NewQuery returns a new query
@@ -282,7 +282,7 @@ func (q *Query) AcceptBoolean(depth int) *Query {
 // operandsQuery will run a query on all possible operands
 type operandsQuery struct {
 	expression ast.Expression
-	query *Query
+	query      *Query
 }
 
 func (qo *operandsQuery) run(expression ast.Expression) error {
@@ -312,8 +312,7 @@ func (qo *operandsQuery) get() ast.Expression {
 // Binary - two operands
 func (q *Query) Operands(query *Query) *Query {
 	q.operations = append(q.operations, &operandsQuery{
-		query:query,
+		query: query,
 	})
 	return q
 }
-

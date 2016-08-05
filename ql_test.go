@@ -15,93 +15,93 @@ func TestQuery(t *testing.T) {
 
 		// Test 0
 		{&ast.BinaryExpression{
-			Operator:token.LOGICAL_OR,
-			Left:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.LOGICAL_OR,
+			Left: &ast.BooleanLiteral{
+				Value: true,
 			},
-			Right:&ast.BooleanLiteral{
-				Value:true,
+			Right: &ast.BooleanLiteral{
+				Value: true,
 			},
-		},NewQuery().MustBeBinary().HasOperator(token.LOGICAL_OR).Operands(NewQuery().AcceptBoolean(5)),
+		}, NewQuery().MustBeBinary().HasOperator(token.LOGICAL_OR).Operands(NewQuery().AcceptBoolean(5)),
 			false,
 		},
 
 		// Test 1
 		{&ast.BinaryExpression{
-			Operator:token.LOGICAL_OR,
-			Left:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.LOGICAL_OR,
+			Left: &ast.BooleanLiteral{
+				Value: true,
 			},
-			Right:&ast.BooleanLiteral{
-				Value:true,
+			Right: &ast.BooleanLiteral{
+				Value: true,
 			},
-		},NewQuery().MustBeUnary(),
+		}, NewQuery().MustBeUnary(),
 			true,
 		},
 
 		// Test 2
 		{&ast.BinaryExpression{
-			Operator:token.LOGICAL_OR,
-			Left:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.LOGICAL_OR,
+			Left: &ast.BooleanLiteral{
+				Value: true,
 			},
-			Right:&ast.BooleanLiteral{
-				Value:true,
+			Right: &ast.BooleanLiteral{
+				Value: true,
 			},
-		},NewQuery().MustBeBinary().Operands(NewQuery().AcceptNumbers(5)),
+		}, NewQuery().MustBeBinary().Operands(NewQuery().AcceptNumbers(5)),
 			true,
 		},
 
 		// Test 3
 		{&ast.BinaryExpression{
-			Operator:token.LOGICAL_OR,
-			Left:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.LOGICAL_OR,
+			Left: &ast.BooleanLiteral{
+				Value: true,
 			},
-			Right:&ast.NumberLiteral{
-				Value:5,
+			Right: &ast.NumberLiteral{
+				Value: 5,
 			},
-		},NewQuery().MustBeBinary().HasOperator(token.LOGICAL_OR).OneSideOtherSide(NewQuery().AcceptBoolean(5), NewQuery().AcceptNumbers(5)),
+		}, NewQuery().MustBeBinary().HasOperator(token.LOGICAL_OR).OneSideOtherSide(NewQuery().AcceptBoolean(5), NewQuery().AcceptNumbers(5)),
 			false,
 		},
 
 		// Test 4
 		{&ast.UnaryExpression{
-			Operator:token.NOT,
-			Operand:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.NOT,
+			Operand: &ast.BooleanLiteral{
+				Value: true,
 			},
-		},NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().AcceptBoolean(5)),
+		}, NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().AcceptBoolean(5)),
 			false,
 		},
 
 		// Test 5
 		{&ast.UnaryExpression{
-			Operator:token.NOT,
-			Operand:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.NOT,
+			Operand: &ast.BooleanLiteral{
+				Value: true,
 			},
-		},NewQuery().MustBeBinary(),
+		}, NewQuery().MustBeBinary(),
 			true,
 		},
 
 		// Test 6
 		{&ast.UnaryExpression{
-			Operator:token.INCREMENT,
-			Operand:&ast.BooleanLiteral{
-				Value:true,
+			Operator: token.INCREMENT,
+			Operand: &ast.BooleanLiteral{
+				Value: true,
 			},
-		},NewQuery().MustBeUnary().HasOperator(token.NOT),
+		}, NewQuery().MustBeUnary().HasOperator(token.NOT),
 			true,
 		},
 
 		// Test 7
 		{&ast.UnaryExpression{
-			Operator:token.INCREMENT,
-			Operand:&ast.NumberLiteral{
-				Value:5,
+			Operator: token.INCREMENT,
+			Operand: &ast.NumberLiteral{
+				Value: 5,
 			},
-		},NewQuery().MustBeUnary().HasOperator(token.INCREMENT).Operands(NewQuery().AcceptNumbers(5)),
+		}, NewQuery().MustBeUnary().HasOperator(token.INCREMENT).Operands(NewQuery().AcceptNumbers(5)),
 			false,
 		},
 	}
@@ -165,10 +165,10 @@ func TestQL3(t *testing.T) {
 		Literal: "true",
 	}
 	/*
-	right := &ast.NumberLiteral{
-		Value:   2,
-		Literal: "2",
-	}
+		right := &ast.NumberLiteral{
+			Value:   2,
+			Literal: "2",
+		}
 	*/
 	binary := &ast.BinaryExpression{
 		Operator: token.LOGICAL_AND,
@@ -177,7 +177,7 @@ func TestQL3(t *testing.T) {
 	}
 	unary := &ast.UnaryExpression{
 		Operator: token.NOT,
-		Operand:binary,
+		Operand:  binary,
 	}
 
 	err := NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().MustBeBinary().HasOperator(token.LOGICAL_AND).Operands(NewQuery().AcceptBoolean(5))).Run(unary)
@@ -205,7 +205,7 @@ func TestQL4_fail(t *testing.T) {
 	}
 	unary := &ast.UnaryExpression{
 		Operator: token.NOT,
-		Operand:binary,
+		Operand:  binary,
 	}
 
 	err := NewQuery().MustBeUnary().HasOperator(token.NOT).Operands(NewQuery().MustBeBinary().HasOperator(token.LOGICAL_AND).Operands(NewQuery().AcceptBoolean(5))).Run(unary)
@@ -217,11 +217,11 @@ func TestQL4_fail(t *testing.T) {
 
 func TestQLCall(t *testing.T) {
 	callee := &ast.Identifier{
-		Name:"f",
+		Name: "f",
 	}
 	call := &ast.CallExpression{
-		Callee:callee,
-		ArgumentList:nil,
+		Callee:       callee,
+		ArgumentList: nil,
 	}
 	statement := &ast.ExpressionStatement{
 		call,
@@ -236,15 +236,15 @@ func TestQLCall(t *testing.T) {
 
 func TestQLReturnStatement(t *testing.T) {
 	callee := &ast.Identifier{
-		Name:"f",
+		Name: "f",
 	}
 	call := &ast.CallExpression{
-		Callee:callee,
-		ArgumentList:nil,
+		Callee:       callee,
+		ArgumentList: nil,
 	}
 
 	statement := &ast.ReturnStatement{
-		Argument:call,
+		Argument: call,
 	}
 
 	err := NewQuery().MustBeCall().RunStatement(statement)
