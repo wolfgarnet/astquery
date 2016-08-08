@@ -101,7 +101,7 @@ func (qo *callQuery) run(e ast.Expression) error {
 	if qo.depth > 0 {
 		inspector := &CallInspector{}
 		Inspect(e, inspector)
-		ok := inspector.Call != nil
+		ok := inspector.Call != nil || inspector.New != nil
 		if !ok {
 			return fmt.Errorf("Expression does not contain a call")
 		}
