@@ -1,6 +1,8 @@
 package astquery
 
-import "github.com/robertkrimen/otto/ast"
+import (
+	"github.com/robertkrimen/otto/ast"
+)
 
 // VerifyExpression will verify an expression given a depth and a verification function.
 func VerifyExpression(exp ast.Expression, depth int, verify func(ast.Expression) bool) bool {
@@ -82,6 +84,7 @@ type Inspector interface {
 // CallInspector is an implementation of the Inspector interface for calls
 type CallInspector struct {
 	Call *ast.CallExpression
+	New  *ast.NewExpression
 }
 
 func (i *CallInspector) Inspect(expression ast.Expression) Inspector {
@@ -89,11 +92,15 @@ func (i *CallInspector) Inspect(expression ast.Expression) Inspector {
 	if isCall {
 		i.Call = call
 	}
+	newe, isNew := expression.(*ast.NewExpression)
+	if isNew {
+		i.New = newe
+	}
 	return i
 }
 
 func (i *CallInspector) Done() bool {
-	return i.Call != nil
+	return i.Call != nil || i.New != nil
 }
 
 // Inspect will inspect a given expression, avoiding certain types of expressions.
