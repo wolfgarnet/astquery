@@ -76,6 +76,7 @@ func newOnlyBooleanVerifier() func(ast.Expression) bool {
 // Inspector interface for inspecting a given expression and is used for the inspect function.
 type Inspector interface {
 	Inspect(expression ast.Expression) Inspector
+	Done() bool
 }
 
 // CallInspector is an implementation of the Inspector interface for calls
@@ -91,13 +92,110 @@ func (i *CallInspector) Inspect(expression ast.Expression) Inspector {
 	return i
 }
 
+func (i *CallInspector) Done() bool {
+	return i.Call != nil
+}
+
 // Inspect will inspect a given expression, avoiding certain types of expressions.
 func Inspect(node ast.Expression, inspector Inspector) Inspector {
-	switch e := node.(type) {
-	case *ast.VariableExpression:
-		return Inspect(e.Initializer, inspector)
 
-	default:
-		return inspector.Inspect(node)
+	if inspector.Inspect(node).Done() {
+		return inspector
 	}
+
+	switch e := node.(type) {
+	case *ast.ArrayLiteral:
+		for _, v := range e.Value {
+			if Inspect(v, inspector).Done() {
+				return inspector
+			}
+		}
+	case *ast.AssignExpression:
+		if Inspect(e.Left, inspector).Done() {
+			return inspector
+		}
+		if Inspect(e.Right, inspector).Done() {
+			return inspector
+		}
+	case *ast.BinaryExpression:
+		if Inspect(e.Left, inspector).Done() {
+			return inspector
+		}
+		if Inspect(e.Right, inspector).Done() {
+			return inspector
+		}
+	case *ast.BracketExpression:
+		if Inspect(e.Left, inspector).Done() {
+			return inspector
+		}
+		if Inspect(e.Member, inspector).Done() {
+			return inspector
+		}
+	case *ast.CallExpression:
+		if Inspect(e.Callee, inspector).Done() {
+			return inspector
+		}
+		for _, l := range e.ArgumentList {
+			if Inspect(l, inspector).Done() {
+				return inspector
+			}
+		}
+	case *ast.ConditionalExpression:
+		if Inspect(e.Test, inspector).Done() {
+			return inspector
+		}
+		if Inspect(e.Consequent, inspector).Done() {
+			return inspector
+		}
+		if Inspect(e.Alternate, inspector).Done() {
+			return inspector
+		}
+	case *ast.DotExpression:
+		if Inspect(e.Left, inspector).Done() {
+			return inspector
+		}
+		if Inspect(e.Identifier, inspector).Done() {
+			return inspector
+		}
+	case *ast.FunctionLiteral:
+		if Inspect(e.Name, inspector).Done() {
+			return inspector
+		}
+		for _, l := range e.ParameterList.List {
+			if Inspect(l, inspector).Done() {
+				return inspector
+			}
+		}
+	case *ast.NewExpression:
+		if Inspect(e.Callee, inspector).Done() {
+			return inspector
+		}
+		for _, l := range e.ArgumentList {
+			if Inspect(l, inspector).Done() {
+				return inspector
+			}
+		}
+	case *ast.ObjectLiteral:
+		for _, l := range e.Value {
+			if Inspect(l.Value, inspector).Done() {
+				return inspector
+			}
+		}
+	case *ast.SequenceExpression:
+		for _, l := range e.Sequence {
+			if Inspect(l, inspector).Done() {
+				return inspector
+			}
+		}
+	case *ast.UnaryExpression:
+		if Inspect(e.Operand, inspector).Done() {
+			return inspector
+		}
+	case *ast.VariableExpression:
+		if Inspect(e.Initializer, inspector).Done() {
+			return inspector
+		}
+	}
+
+	return inspector
 }
