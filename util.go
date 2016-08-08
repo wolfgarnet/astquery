@@ -33,6 +33,12 @@ func VerifyExpression(exp ast.Expression, depth int, verify func(ast.Expression)
 	case *ast.StringLiteral:
 		return true
 
+	case *ast.UnaryExpression:
+		return VerifyExpression(e.Operand, depth, verify)
+
+	case *ast.VariableExpression:
+		return VerifyExpression(e.Initializer, depth, verify)
+
 	default:
 		return false
 	}

@@ -40,6 +40,15 @@ func (ql *Query) RunStatement(statement ast.Statement) error {
 		return ql.Run(s.Expression)
 	case *ast.ReturnStatement:
 		return ql.Run(s.Argument)
+	case *ast.VariableStatement:
+		for _, e := range s.List {
+			err := ql.Run(e)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	default:
 		return fmt.Errorf("Unsupported statement: %T", statement)
 	}
