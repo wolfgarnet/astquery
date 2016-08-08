@@ -253,3 +253,27 @@ func TestQLReturnStatement(t *testing.T) {
 		t.Errorf("Test failed, %v", err)
 	}
 }
+
+func TestQLVarStatement(t *testing.T) {
+	callee := &ast.Identifier{
+		Name: "f",
+	}
+	call := &ast.CallExpression{
+		Callee:       callee,
+		ArgumentList: nil,
+	}
+	varExp := &ast.VariableExpression{
+		Name:        "test",
+		Initializer: call,
+	}
+
+	statement := &ast.VariableStatement{
+		List: []ast.Expression{varExp},
+	}
+
+	err := NewQuery().MustBeCallD().RunStatement(statement)
+
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+}

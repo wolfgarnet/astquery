@@ -72,3 +72,32 @@ func newOnlyBooleanVerifier() func(ast.Expression) bool {
 		return true
 	}
 }
+
+// Inspector interface for inspecting a given expression and is used for the inspect function.
+type Inspector interface {
+	Inspect(expression ast.Expression) Inspector
+}
+
+// CallInspector is an implementation of the Inspector interface for calls
+type CallInspector struct {
+	Call *ast.CallExpression
+}
+
+func (i *CallInspector) Inspect(expression ast.Expression) Inspector {
+	call, isCall := expression.(*ast.CallExpression)
+	if isCall {
+		i.Call = call
+	}
+	return i
+}
+
+// Inspect will inspect a given expression, avoiding certain types of expressions.
+func Inspect(node ast.Expression, inspector Inspector) Inspector {
+	switch e := node.(type) {
+	case *ast.VariableExpression:
+		return Inspect(e.Initializer, inspector)
+
+	default:
+		return inspector.Inspect(node)
+	}
+}

@@ -92,14 +92,25 @@ func (q *Query) MustBeBinary() *Query {
 
 // callQuery
 type callQuery struct {
-	call *ast.CallExpression
+	depth int
+	call  *ast.CallExpression
 }
 
 func (qo *callQuery) run(e ast.Expression) error {
-	var isCall bool
-	qo.call, isCall = e.(*ast.CallExpression)
-	if !isCall {
-		return fmt.Errorf("Expression is not call, was %T", e)
+	if qo.depth > 0 {
+		inspector := &CallInspector{}
+		Inspect(e, inspector)
+		ok := inspector.Call != nil
+		if !ok {
+			return fmt.Errorf("Expression does not contain a call")
+		}
+		qo.call = inspector.Call
+	} else {
+		var isCall bool
+		qo.call, isCall = e.(*ast.CallExpression)
+		if !isCall {
+			return fmt.Errorf("Expression is not call, was %T", e)
+		}
 	}
 
 	return nil
@@ -112,6 +123,11 @@ func (qo *callQuery) get() ast.Expression {
 // MustBeBinary restricts the expression to be binary
 func (q *Query) MustBeCall() *Query {
 	q.operations = append(q.operations, &callQuery{})
+	return q
+}
+
+func (q *Query) MustBeCallD() *Query {
+	q.operations = append(q.operations, &callQuery{1, nil})
 	return q
 }
 
