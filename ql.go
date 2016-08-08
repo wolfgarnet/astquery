@@ -133,7 +133,7 @@ func (q *Query) MustBeCall() *Query {
 }
 
 func (q *Query) MustBeCallD() *Query {
-	q.operations = append(q.operations, &callQuery{1, nil})
+	q.operations = append(q.operations, &callQuery{1, nil, nil})
 	return q
 }
 
