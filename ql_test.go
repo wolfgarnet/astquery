@@ -234,6 +234,34 @@ func TestQLCall(t *testing.T) {
 	}
 }
 
+func TestQLCall2(t *testing.T) {
+	callee := &ast.Identifier{
+		Name: "f",
+	}
+	call := &ast.CallExpression{
+		Callee:       callee,
+		ArgumentList: nil,
+	}
+	call2 := &ast.CallExpression{
+		Callee:       call,
+		ArgumentList: nil,
+	}
+	statement := &ast.ExpressionStatement{
+		call2,
+	}
+
+	inspector := NewQuery().MustBeCallD(true).Collect()
+	err := inspector.RunStatement(statement)
+
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+
+	if call != inspector.Collected {
+		t.Errorf("Collected expression not correct")
+	}
+}
+
 func TestQLReturnStatement(t *testing.T) {
 	callee := &ast.Identifier{
 		Name: "f",
@@ -271,7 +299,7 @@ func TestQLVarStatement(t *testing.T) {
 		List: []ast.Expression{varExp},
 	}
 
-	err := NewQuery().MustBeCallD().RunStatement(statement)
+	err := NewQuery().MustBeCallD(false).RunStatement(statement)
 
 	if err != nil {
 		t.Errorf("Test failed, %v", err)

@@ -85,22 +85,29 @@ type Inspector interface {
 type CallInspector struct {
 	Call *ast.CallExpression
 	New  *ast.NewExpression
+
+	// First determines if the first found call is collected
+	First bool
 }
 
 func (i *CallInspector) Inspect(expression ast.Expression) Inspector {
 	call, isCall := expression.(*ast.CallExpression)
-	if isCall {
+	if isCall && ((i.Call == nil && !i.First) || (i.First)) {
 		i.Call = call
 	}
 	newe, isNew := expression.(*ast.NewExpression)
-	if isNew {
+	if isNew && ((i.New == nil && !i.First) || (i.First)) {
 		i.New = newe
 	}
 	return i
 }
 
 func (i *CallInspector) Done() bool {
-	return i.Call != nil || i.New != nil
+	if i.First {
+		return false
+	} else {
+		return i.Call != nil || i.New != nil
+	}
 }
 
 // Inspect will inspect a given expression, avoiding certain types of expressions.

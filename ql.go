@@ -93,6 +93,7 @@ func (q *Query) MustBeBinary() *Query {
 // callQuery
 type callQuery struct {
 	depth int
+	first bool
 	call  *ast.CallExpression
 	newe  *ast.NewExpression
 }
@@ -100,6 +101,7 @@ type callQuery struct {
 func (qo *callQuery) run(e ast.Expression) error {
 	if qo.depth > 0 {
 		inspector := &CallInspector{}
+		inspector.First = qo.first
 		Inspect(e, inspector)
 		ok := inspector.Call != nil || inspector.New != nil
 		if !ok {
@@ -132,8 +134,8 @@ func (q *Query) MustBeCall() *Query {
 	return q
 }
 
-func (q *Query) MustBeCallD() *Query {
-	q.operations = append(q.operations, &callQuery{1, nil, nil})
+func (q *Query) MustBeCallD(first bool) *Query {
+	q.operations = append(q.operations, &callQuery{1, first, nil, nil})
 	return q
 }
 
