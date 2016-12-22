@@ -20,8 +20,6 @@ func NewQuery() *Query {
 // Run runs the query given the ast expression
 func (ql *Query) Run(expression ast.Expression) error {
 	for _, q := range ql.operations {
-		fmt.Printf("Running %v\n", expression)
-		fmt.Printf("Q=%T:%v\n", q, q)
 		err := q.run(expression)
 		if err != nil {
 			return err
@@ -219,7 +217,6 @@ func (qo *unaryQuery) get() ast.Expression {
 // MustBeUnary restricts the expression to be unary
 func (q *Query) MustBeUnary() *Query {
 	q.operations = append(q.operations, &unaryQuery{})
-	fmt.Printf("Added operation : %v\n", q.operations)
 	return q
 }
 
