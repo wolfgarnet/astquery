@@ -274,7 +274,9 @@ func (q *Query) HasOperator(operators ...token.Token) *Query {
 }
 
 func (q *Query) RightSide(query *Query) *Query {
-	q.operations = append(q.operations, &rightSideQuery{query})
+	q.operations = append(q.operations, &rightSideQuery{
+		query: query,
+	})
 	return q
 }
 
