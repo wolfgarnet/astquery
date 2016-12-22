@@ -117,7 +117,29 @@ func (qo *binaryQuery) get() ast.Expression {
 // MustBeBinary restricts the expression to be binary
 func (q *Query) MustBeBinary() *Query {
 	q.operations = append(q.operations, &binaryQuery{})
-	fmt.Printf("Added binary operation\n")
+	return q
+}
+
+type functionLiteralQuery struct {
+	function ast.Expression
+}
+
+func (qo *functionLiteralQuery) run(e ast.Expression) error {
+	var isFLiteral bool
+	qo.function, isFLiteral = e.(*ast.FunctionLiteral)
+	if !isFLiteral {
+		return fmt.Errorf("Expression is not a function literal")
+	}
+
+	return nil
+}
+
+func (qo *functionLiteralQuery) get() ast.Expression {
+	return qo.function
+}
+
+func (q *Query) MustBeFunctionLiteral() *Query {
+	q.operations = append(q.operations, &functionLiteralQuery{})
 	return q
 }
 
