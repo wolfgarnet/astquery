@@ -274,16 +274,16 @@ func (q *Query) HasOperator(operators ...token.Token) *Query {
 }
 
 func (q *Query) RightSide(query *Query) *Query {
-	q.operations = append(q.operations, &rigthSideQuery{})
+	q.operations = append(q.operations, &rightSideQuery{query})
 	return q
 }
 
-type rigthSideQuery struct {
+type rightSideQuery struct {
 	expression ast.Expression
 	query      *Query
 }
 
-func (qo *rigthSideQuery) run(e ast.Expression) error {
+func (qo *rightSideQuery) run(e ast.Expression) error {
 	qo.expression = e
 	switch n := e.(type) {
 	case *ast.AssignExpression:
@@ -295,7 +295,7 @@ func (qo *rigthSideQuery) run(e ast.Expression) error {
 	}
 }
 
-func (qo *rigthSideQuery) get() ast.Expression {
+func (qo *rightSideQuery) get() ast.Expression {
 	return qo.expression
 }
 
