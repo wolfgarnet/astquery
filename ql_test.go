@@ -305,3 +305,25 @@ func TestQLVarStatement(t *testing.T) {
 		t.Errorf("Test failed, %v", err)
 	}
 }
+
+func TestQLAnonymousFunctionCall(t *testing.T) {
+
+	function := &ast.FunctionLiteral{
+		Body: nil,
+	}
+
+	call := &ast.CallExpression{
+		Callee:       function,
+		ArgumentList: nil,
+	}
+
+	statement := &ast.ExpressionStatement{
+		Expression: call,
+	}
+
+	err := NewQuery().MustBeCall().RunStatement(statement)
+
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+}

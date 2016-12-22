@@ -20,6 +20,8 @@ func NewQuery() *Query {
 // Run runs the query given the ast expression
 func (ql *Query) Run(expression ast.Expression) error {
 	for _, q := range ql.operations {
+		fmt.Printf("Running %v\n", expression)
+		fmt.Printf("Q=%T:%v\n", q, q)
 		err := q.run(expression)
 		if err != nil {
 			return err
@@ -66,14 +68,42 @@ type QLOperation interface {
 }
 
 // binaryQuery requires the current expression to be binary
+type assignQuery struct {
+	assign ast.Expression
+}
+
+func (qo *assignQuery) run(e ast.Expression) error {
+	var isAssign bool
+	qo.assign, isAssign = e.(*ast.AssignExpression)
+	if !isAssign {
+		return fmt.Errorf("Expression is not binary, was %T", e)
+	}
+
+	return nil
+}
+
+func (qo *assignQuery) get() ast.Expression {
+	return qo.assign
+}
+
+// MustBeBinary restricts the expression to be binary
+func (q *Query) MustBeAssign() *Query {
+	q.operations = append(q.operations, &assignQuery{})
+	return q
+}
+
+// binaryQuery requires the current expression to be binary
 type binaryQuery struct {
-	binary *ast.BinaryExpression
+	binary ast.Expression
 }
 
 func (qo *binaryQuery) run(e ast.Expression) error {
-	var isBinary bool
-	qo.binary, isBinary = e.(*ast.BinaryExpression)
-	if !isBinary {
+	switch e.(type) {
+	case *ast.AssignExpression:
+		qo.binary = e
+	case *ast.BinaryExpression:
+		qo.binary = e
+	default:
 		return fmt.Errorf("Expression is not binary, was %T", e)
 	}
 
@@ -87,6 +117,7 @@ func (qo *binaryQuery) get() ast.Expression {
 // MustBeBinary restricts the expression to be binary
 func (q *Query) MustBeBinary() *Query {
 	q.operations = append(q.operations, &binaryQuery{})
+	fmt.Printf("Added binary operation\n")
 	return q
 }
 
@@ -128,7 +159,12 @@ func (qo *callQuery) get() ast.Expression {
 	return qo.newe
 }
 
-// MustBeBinary restricts the expression to be binary
+func (q *Query) MustBeAnonymousCall() *Query {
+	q.operations = append(q.operations, &callQuery{})
+	return q
+}
+
+// MustBeCall restricts the expression to be a call
 func (q *Query) MustBeCall() *Query {
 	q.operations = append(q.operations, &callQuery{})
 	return q
@@ -161,6 +197,7 @@ func (qo *unaryQuery) get() ast.Expression {
 // MustBeUnary restricts the expression to be unary
 func (q *Query) MustBeUnary() *Query {
 	q.operations = append(q.operations, &unaryQuery{})
+	fmt.Printf("Added operation : %v\n", q.operations)
 	return q
 }
 
@@ -174,6 +211,9 @@ func (qo *operatorQuery) run(e ast.Expression) error {
 	qo.expression = e
 	var operator token.Token
 	switch t := e.(type) {
+	case *ast.AssignExpression:
+		operator = t.Operator
+
 	case *ast.BinaryExpression:
 		operator = t.Operator
 
@@ -209,6 +249,32 @@ func (q *Query) HasOperator(operators ...token.Token) *Query {
 		operators: operators,
 	})
 	return q
+}
+
+func (q *Query) RightSide(query *Query) *Query {
+	q.operations = append(q.operations, &rigthSideQuery{})
+	return q
+}
+
+type rigthSideQuery struct {
+	expression ast.Expression
+	query      *Query
+}
+
+func (qo *rigthSideQuery) run(e ast.Expression) error {
+	qo.expression = e
+	switch n := e.(type) {
+	case *ast.AssignExpression:
+		return qo.query.Run(n.Right)
+	case *ast.BinaryExpression:
+		return qo.query.Run(n.Right)
+	default:
+		return fmt.Errorf("Expression is not compatible with right side queries.")
+	}
+}
+
+func (qo *rigthSideQuery) get() ast.Expression {
+	return qo.expression
 }
 
 // eitherSideQuery will try to run the two provided queries on the binary expression in both order.
