@@ -327,3 +327,54 @@ func TestQLAnonymousFunctionCall(t *testing.T) {
 		t.Errorf("Test failed, %v", err)
 	}
 }
+
+func TestDotFunctionCall(t *testing.T) {
+
+	object := &ast.Identifier{
+		Name: "obj",
+	}
+
+	function := &ast.Identifier{
+		Name: "f",
+	}
+
+	dot := &ast.DotExpression{
+		Left:       object,
+		Identifier: function,
+	}
+
+	call := &ast.CallExpression{
+		Callee:       dot,
+		ArgumentList: nil,
+	}
+
+	statement := &ast.ExpressionStatement{
+		Expression: call,
+	}
+
+	q := NewQuery().MustBeCall().Collect()
+	err := q.RunStatement(statement)
+
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+}
+
+func TestEither(t *testing.T) {
+	function := &ast.Identifier{
+		Name: "f",
+	}
+	call := &ast.CallExpression{
+		Callee:       function,
+		ArgumentList: nil,
+	}
+
+	statement := &ast.ExpressionStatement{
+		Expression: call,
+	}
+
+	err := NewQuery().Either(NewQuery().MustBeUnary(), NewQuery().MustBeBinary(), NewQuery().MustBeCall()).RunStatement(statement)
+	if err != nil {
+		t.Errorf("Failed: %v", err)
+	}
+}

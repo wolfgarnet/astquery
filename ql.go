@@ -195,6 +195,39 @@ func (q *Query) MustBeCallD(first bool) *Query {
 	return q
 }
 
+// Callee name
+type calleeName struct {
+	identifier *ast.Identifier
+}
+
+func (qo *calleeName) run(e ast.Expression) error {
+	call, isCall := e.(*ast.CallExpression)
+	if !isCall {
+		return fmt.Errorf("Expression is not a call")
+	}
+
+	switch t := call.Callee.(type) {
+	case *ast.Identifier:
+		qo.identifier = t
+	case *ast.DotExpression:
+		qo.identifier = t.Identifier
+
+	default:
+		return fmt.Errorf("Call expression does not contain an identifier")
+	}
+
+	return nil
+}
+
+func (qo *calleeName) get() ast.Expression {
+	return qo.identifier
+}
+
+func (q *Query) CallMustHaveIdentifier() *Query {
+	q.operations = append(q.operations, &calleeName{})
+	return q
+}
+
 // unaryQuery requires the current expression to be unary
 type unaryQuery struct {
 	unary *ast.UnaryExpression
@@ -296,6 +329,43 @@ func (qo *rightSideQuery) run(e ast.Expression) error {
 
 func (qo *rightSideQuery) get() ast.Expression {
 	return qo.expression
+}
+
+type either struct {
+	expression ast.Expression
+	queries    []*Query
+}
+
+func (qo *either) run(e ast.Expression) error {
+	errors := make([]error, len(qo.queries))
+	failed := true
+	for i, q := range qo.queries {
+		err := q.Run(e)
+		if err == nil {
+			failed = false
+			break
+		}
+
+		errors[i] = err
+	}
+
+	if failed {
+		return fmt.Errorf("Failed either: %v", errors)
+	}
+
+	qo.expression = e
+	return nil
+}
+
+func (qo *either) get() ast.Expression {
+	return qo.expression
+}
+
+func (q *Query) Either(queries ...*Query) *Query {
+	q.operations = append(q.operations, &either{
+		queries: queries,
+	})
+	return q
 }
 
 // eitherSideQuery will try to run the two provided queries on the binary expression in both order.
