@@ -328,6 +328,38 @@ func TestQLAnonymousFunctionCall(t *testing.T) {
 	}
 }
 
+func TestQLAnonymousFunctionCall2(t *testing.T) {
+
+	function := &ast.FunctionLiteral{
+		Body: nil,
+	}
+
+	call := &ast.CallExpression{
+		Callee:       function,
+		ArgumentList: nil,
+	}
+
+	id := &ast.Identifier{
+		Name: "i",
+	}
+
+	assign := &ast.AssignExpression{
+		Left:  id,
+		Right: call,
+	}
+
+	statement := &ast.ExpressionStatement{
+		Expression: assign,
+	}
+
+	query := NewQuery().MustBeCallD(true).Collect()
+	err := query.RunStatement(statement)
+
+	if err != nil {
+		t.Errorf("Test failed, %v", err)
+	}
+}
+
 func TestDotFunctionCall(t *testing.T) {
 
 	object := &ast.Identifier{

@@ -175,9 +175,11 @@ func Inspect(node ast.Expression, inspector Inspector) Inspector {
 		if Inspect(e.Name, inspector).Done() {
 			return inspector
 		}
-		for _, l := range e.ParameterList.List {
-			if Inspect(l, inspector).Done() {
-				return inspector
+		if e.ParameterList != nil {
+			for _, l := range e.ParameterList.List {
+				if Inspect(l, inspector).Done() {
+					return inspector
+				}
 			}
 		}
 	case *ast.NewExpression:
