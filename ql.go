@@ -65,7 +65,34 @@ type QLOperation interface {
 	get() ast.Expression
 }
 
-// binaryQuery requires the current expression to be binary
+type assignOrVarQuery struct {
+	assignOrVar ast.Expression
+}
+
+func (qo *assignOrVarQuery) run(e ast.Expression) error {
+	var isAssign, isVar bool
+	qo.assignOrVar, isAssign = e.(*ast.AssignExpression)
+	if !isAssign {
+		qo.assignOrVar, isVar = e.(*ast.VariableExpression)
+		if !isVar {
+			return fmt.Errorf("Expression is not a variable or assign expression, was %T", e)
+		}
+	}
+
+	return nil
+}
+
+func (qo *assignOrVarQuery) get() ast.Expression {
+	return qo.assignOrVar
+}
+
+// MustBeAssign restricts the expression to be binary
+func (q *Query) MustBeAssignOrVar() *Query {
+	q.operations = append(q.operations, &assignOrVarQuery{})
+	return q
+}
+
+// assignQuery requires the current expression to be assign
 type assignQuery struct {
 	assign ast.Expression
 }
@@ -74,7 +101,7 @@ func (qo *assignQuery) run(e ast.Expression) error {
 	var isAssign bool
 	qo.assign, isAssign = e.(*ast.AssignExpression)
 	if !isAssign {
-		return fmt.Errorf("Expression is not binary, was %T", e)
+		return fmt.Errorf("Expression is not assign, was %T", e)
 	}
 
 	return nil
@@ -84,7 +111,7 @@ func (qo *assignQuery) get() ast.Expression {
 	return qo.assign
 }
 
-// MustBeBinary restricts the expression to be binary
+// MustBeAssign restricts the expression to be binary
 func (q *Query) MustBeAssign() *Query {
 	q.operations = append(q.operations, &assignQuery{})
 	return q
@@ -276,6 +303,26 @@ func (q *Query) MustBeUnary() *Query {
 	return q
 }
 
+// Empty
+type emptyQuery struct {
+	expression ast.Expression
+}
+
+func (qo *emptyQuery) run(e ast.Expression) error {
+	qo.expression = e
+	return nil
+}
+
+func (qo *emptyQuery) get() ast.Expression {
+	return qo.expression
+}
+
+// Empty does nothing, but collects the expression(if needed)
+func (q *Query) Empty() *Query {
+	q.operations = append(q.operations, &emptyQuery{})
+	return q
+}
+
 // operatorQuery filters expressions based on operators
 type operatorQuery struct {
 	operators  []token.Token
@@ -345,6 +392,8 @@ func (qo *rightSideQuery) run(e ast.Expression) error {
 		return qo.query.Run(n.Right)
 	case *ast.BinaryExpression:
 		return qo.query.Run(n.Right)
+	case *ast.VariableExpression:
+		return qo.query.Run(n.Initializer)
 	default:
 		return fmt.Errorf("Expression is not compatible with right side queries.")
 	}
