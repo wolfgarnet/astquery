@@ -75,6 +75,19 @@ func newOnlyBooleanVerifier() func(ast.Expression) bool {
 	}
 }
 
+func newOnlyThisVerifier() func(ast.Expression) bool {
+	return func(e ast.Expression) bool {
+		switch e.(type) {
+		case *ast.StringLiteral:
+			return false
+		case *ast.NumberLiteral:
+			return false
+		}
+
+		return true
+	}
+}
+
 // Inspector interface for inspecting a given expression and is used for the inspect function.
 type Inspector interface {
 	Inspect(expression ast.Expression) Inspector
@@ -108,6 +121,23 @@ func (i *CallInspector) Done() bool {
 	} else {
 		return i.Call != nil || i.New != nil
 	}
+}
+
+type ThisInspector struct {
+	Found int
+}
+
+func (i *ThisInspector) Inspect(expression ast.Expression) Inspector {
+	_, isThis := expression.(*ast.ThisExpression)
+	if isThis {
+		i.Found++
+	}
+
+	return i
+}
+
+func (i *ThisInspector) Done() bool {
+	return false
 }
 
 // Inspect will inspect a given expression, avoiding certain types of expressions.
